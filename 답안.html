@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>이벤트 실습</title>
+  <style>
+    li {
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>📋 할 일 목록</h1>
+  <input type="text" id="todo-input" placeholder="할 일을 입력하세요" />
+  <button id="add-btn">추가</button>
+  <ul id="todo-list"></ul>
+
+  <script>
+    const input = document.getElementById("todo-input");
+const addBtn = document.getElementById("add-btn");
+const list = document.getElementById("todo-list");
+
+// ✅ addEventListener를 통해 이벤트 리스너 등록 (콜백 함수 직접 실행 X)
+addBtn.addEventListener("click", handleAddTodo);
+
+// ✨ 콜백 함수: 버튼 클릭 시 실행되는 동작 정의
+function handleAddTodo() {
+  const value = input.value.trim();
+  if (value === "") {
+    alert("할 일을 입력하세요!");
+    return;
+  }
+
+  // li 생성 및 텍스트 삽입
+  const li = document.createElement("li");
+  const span = document.createElement("span");
+  span.textContent = value;
+
+  // 삭제 버튼 생성
+  const delBtn = document.createElement("button");
+  delBtn.textContent = "삭제";
+  delBtn.classList.add("remove");
+
+  li.appendChild(span);
+  li.appendChild(delBtn);
+  list.appendChild(li);
+
+  // 입력창 초기화
+  input.value = "";
+
+  // 삭제 버튼에 이벤트 리스너 등록 (콜백 함수는 일반 함수로 작성)
+  delBtn.addEventListener("click", handleDelete);
+}
+
+// 🧠 삭제 이벤트 핸들러
+function handleDelete(event) {
+  console.log("this:", this);                     // this → 현재 버튼 (정상)
+  console.log("event.target:", event.target);     // 실제 클릭된 요소
+  console.log("event.currentTarget:", event.currentTarget); // 리스너 등록된 요소
+
+  const li = this.parentElement;
+  li.remove();
+}
+
+// ✅ 콜백 함수 전달 방식 테스트
+function sayHello() {
+  console.log("👋 안녕하세요!");
+}
+
+// 잘못된 방식 ❌: 즉시 실행되어 등록 시점에 실행됨
+// addBtn.addEventListener("click", sayHello());
+
+// 올바른 방식 ✅: 참조만 전달 → 클릭 시점에 실행됨
+addBtn.addEventListener("dblclick", sayHello);
+  </script>
+</body>
+</html>
