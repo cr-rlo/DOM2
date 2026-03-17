@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <input id="nameInput" placeholder="이름을 입력하세요" />
+  <button id="generateBtn">프로필 생성</button>
+
+  <div id="profileBox" style="position: relative; padding: 50px; border: 1px solid #ccc; margin-top: 30px;">
+  🧑 사용자 프로필
+  </div>
+
+<script>
+
+  document.addEventListener("copy", prevent);
+
+  function prevent(e){
+    e.preventDefault();
+    alert("복사 금지입니다.");
+  };
+
+  const profileBox = document.getElementById("profileBox");
+
+  const toolTip = document.createElement("div");
+
+  const generateBtn = document.getElementById("generateBtn");
+  
+  
+  const input = document.getElementById("nameInput");
+  input.addEventListener("keydown", keyDown);
+
+  generateBtn.addEventListener("click", generateProfile, { once: true });
+
+  function generateProfile(){
+    alert("랜덤 프로필 생성 완료!");
+    input.value = "";
+  };
+
+  
+  function keyDown(e){
+    console.log(e.key);
+  };
+
+
+  function showTooltip(e){
+    toolTip.textContent = "프로필 이미지 입니다";
+    toolTip.style.position = "absolute";
+    toolTip.style.backgroundColor = "black";
+    toolTip.style.color = "white";
+    toolTip.style.padding = "5px";
+    toolTip.style.borderRadius = "5px";
+    toolTip.style.left = `${e.clientX}px`;
+    toolTip.style.top = `${e.clientY}px`;
+    profileBox.appendChild(toolTip);
+  };
+
+  function moveTooltip(e){
+    toolTip.style.left = `${e.clientX}px`;
+    toolTip.style.top = `${e.clientY}px`;
+  };
+
+  function hideTooltip(e){
+    if (toolTip == null) return;
+    toolTip.remove();
+    toolTip.removeEventListener("mousemove", moveTooltip);
+    console.log("툴팁 이벤트 제거됨");
+  };
+
+  profileBox.addEventListener("mouseenter", showTooltip);
+  profileBox.addEventListener("mousemove", moveTooltip);
+  profileBox.addEventListener("mouseleave", hideTooltip);
+
+
+</script>
+</body>
+</html>
