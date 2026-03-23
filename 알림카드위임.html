@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>알림 카드 위임</title>
+  <style>
+    .card{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px;
+      border: 1px solid #ccc;
+      margin-bottom: 5px;
+    }
+    .checked{
+      text-decoration: line-through;
+      color: gray;
+    }
+  </style>
+</head>
+<body>
+  <button id="add-alert">새 알림 추가</button>
+<ul id="notification-list">
+  <li class="card">
+    <a href="#" class="title">[공지] 서비스 점검 안내</a>
+    <button class="pin" data-action="pin">📌</button>
+    <button class="remove" data-action="delete">🗑</button>
+    <button class="mark" data-action="check">✔️</button>
+  </li>
+  <li class="card">
+    <a href="#" class="title">[알림] 이용약관 변경</a>
+    <button class="pin" data-action="pin">📌</button>
+    <button class="remove" data-action="delete">🗑</button>
+    <button class="mark" data-action="check">✔️</button>
+  </li>
+</ul>
+<script>
+  const list = document.getElementById("notification-list");
+  const button = document.getElementById("add-alert");
+
+  let count = 1;
+
+  button.addEventListener("click", () => {
+    const li = document.createElement("li");
+    li.className = "card";
+    li.innerHTML = `
+      <a href="#" class="title">[알림] 새로운 알림 ${count++}</a>
+      <button class="pin" data-action="pin">📌</button>
+      <button class="remove" data-action="delete">🗑</button>
+      <button class="mark" data-action="check">✔️</button>
+    `;
+    list.appendChild(li);
+  });
+
+  list.addEventListener("click", (e)=>{
+    const card = e.target.closest(".card")
+    if(e.target.dataset.action == "pin") {
+      list.prepend(card);
+      console.log("🔝 고정됨");
+  }
+    else if(e.target.dataset.action == "delete"){
+      card.remove();
+    }
+  
+    else if(e.target.dataset.action == "check"){
+      card.classList.toggle("checked");
+      console.log("✅ 확인됨");
+
+    }
+    else if(e.target.classList.contains("title")){
+      e.preventDefault();
+      console.log("🔍 상세 보기")
+    }
+
+    else{
+      console.log("🔍 상세 보기")
+    }
+
+  });
+
+
+</script>
+</body>
+</html>
