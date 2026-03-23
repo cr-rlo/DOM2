@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>알림 카드 인터페이스</title>
+  <style>
+    .card {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 8px;
+      background: #f9f9f9;
+    }
+    .card button {
+      margin-left: 5px;
+    }
+  </style>
+</head>
+<body>
+
+  <button id="add-alert">새 알림 추가</button>
+
+  <ul id="notification-list">
+    <li class="card">
+      <a href="#" class="title">[공지] 서비스 점검 안내</a>
+      <button class="pin" data-action="pin">📌</button>
+      <button class="remove" data-action="delete">🗑</button>
+      <button class="mark" data-action="check">✔️</button>
+    </li>
+    <li class="card">
+      <a href="#" class="title">[알림] 이용약관 변경</a>
+      <button class="pin" data-action="pin">📌</button>
+      <button class="remove" data-action="delete">🗑</button>
+      <button class="mark" data-action="check">✔️</button>
+    </li>
+  </ul>
+
+  <script>
+    const list = document.getElementById("notification-list"); 
+
+    list.addEventListener("click", (event) => {
+      event.preventDefault(); // 링크 클릭 시 이동 방지
+
+      const card = event.target.closest(".card"); //클릭한 요소에서 위로 올라가며 .card 클래스를 가진 가장 가까운 부모를 찾음
+      if (!card) return;
+      // .card안이 아닌 곳을 클릭했을 때 함수를 종료함
+
+      const action = event.target.dataset.action; 
+
+      // 버튼 클릭인 경우
+      if (action === "pin") {
+        console.log("🔝 고정됨");
+        event.stopPropagation();
+        //버튼의 부모요소가 li 즉 카드이기 때문에 이 기능을 걸어주지 않으면 버블링으러로 card클릭까지 실행되어 카드 상세보기가 출력되어버리기 때문
+        // 즉 리스트 이벤트 리스너도 실행되는 것을 막기 위함
+        return;
+      }
+
+      if (action === "delete") {
+        card.remove();
+        event.stopPropagation();
+        return;
+      }
+
+      if (action === "check") {
+        console.log("✅ 확인됨");
+        event.stopPropagation();
+        return;
+      }
+
+      // 상세 보기: 버튼 외 영역 클릭 시만 동작
+      if (!event.target.closest("button")) {
+        console.log("🔍 상세 보기");
+      }
+      // 버튼 안에 아이콘을 클릭하더라도 즉, 우리가 클릭한 것이 버튼이 아니라 아이콘이라도 closest를 사용해서 버튼 요소를 가져옴 -> 여기에 !를 붙여서 버튼이 아닌 경우, 버튼 외 영역을 클릭한 경우
+    });
+
+    const addBtn = document.getElementById("add-alert");
+
+    addBtn.addEventListener("click", () => {
+      const li = document.createElement("li");
+      li.className = "card";
+      li.innerHTML = `
+        <a href="#" class="title">[새 알림] 업데이트 도착</a>
+        <button class="pin" data-action="pin">📌</button>
+        <button class="remove" data-action="delete">🗑</button>
+        <button class="mark" data-action="check">✔️</button>
+      `;
+      list.appendChild(li);
+    });
+  </script>
+
+</body>
+</html>
+

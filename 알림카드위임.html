@@ -3,12 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>알림 카드 위임</title>
+  <title>알림 카드 인터페이스</title>
   <style>
     .card{
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: space-between; /* flex컨테이너 안에서 요소들을 가로로 정렬하는 속성
+      따라서 display: flex;가 필요
+      특히 space-between은 양끝에 붙고 나머지를 균등 배치함 */
+      border-radius: 8px;
       padding: 10px;
       border: 1px solid #ccc;
       margin-bottom: 5px;
@@ -35,9 +38,10 @@
     <button class="mark" data-action="check">✔️</button>
   </li>
 </ul>
+
 <script>
-  const list = document.getElementById("notification-list");
-  const button = document.getElementById("add-alert");
+  const list = document.getElementById("notification-list"); //ul요소 변수로 선언
+  const button = document.getElementById("add-alert"); //버튼 요소 변수로 선언
 
   let count = 1;
 
