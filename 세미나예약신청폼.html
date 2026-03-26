@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>세미나 예약 신청 폼</title>
+</head>
+<body>
+  <form id="seminar-form">
+  <label>이름:
+    <input type="text" name="name" maxlength="10" autofocus />
+    <span class="hint" id="name-hint"></span>
+  </label>
+
+  <label>이메일:
+    <input type="email" name="email" />
+    <span class="hint" id="email-hint"></span>
+  </label>
+
+  <label>참가 일자:
+    <select name="date">
+      <option value="">일자를 선택하세요</option>
+      <option value="2025-08-10">2025년 8월 10일</option>
+      <option value="2025-08-11">2025년 8월 11일</option>
+    </select>
+    <span class="hint" id="date-hint"></span>
+  </label>
+
+  <label>참석자 수:
+    <input type="number" name="count" min="1" />
+    <span class="hint" id="count-hint"></span>
+  </label>
+
+  <label>요청 사항:
+    <textarea name="memo" rows="3"></textarea>
+    <span class="hint" id="memo-hint"></span>
+  </label>
+
+  <button type="submit" disabled>신청하기</button>
+</form>
+
+<p id="result-message"></p>
+</body>
+<script>
+  const form = document.getElementById("seminar-form");
+  const name = form.name;
+  const email = form.email;
+  const date = form.date;
+  const count = form.count;
+  const memo = form.memo;
+  const submitBtn = form.querySelector("button");
+  const resultMessage = document.getElementById("result-message")
+
+  const nameHint = document.getElementById("name-hint");
+  const emailHint = document.getElementById("email-hint");
+  const dateHint = document.getElementById("date-hint");
+  const countHint = document.getElementById("count-hint");
+  const memoHint = document.getElementById("memo-hint");
+
+  const validationState = {
+    name: false,
+    email: false,
+    date: false,
+    count: false,
+
+  };
+
+  name.addEventListener("input", ()=>{ 
+    const len = name.value.trim().length;
+
+    if(len >= 2){
+      isValid(name, nameHint, "${len}자 입력됨");
+      validationState.name = true;
+    }else{
+      isInvalid(name, nameHint, "이름은 2자 이상 입력해주세요.");
+      validationState.name = false;
+    }
+
+  });
+
+  email.addEventListener("blur", ()=>{
+    if(email.value.includes("@") && email.value.includes(".")){
+      isValid(email, emailHint, "✅ 유효한 이메일입니다.");
+      validationState.email = true;
+
+    }else{
+      isInvalid(email, emailHint, "❌ 이메일 형식을 확인해주세요.");
+      validationState.email = false;
+    }
+
+  });
+
+  date.addEventListener("change", ()=>{
+    if(select.value === ""){
+      isInvalid(date, dateHint, "❌ 날짜를 선택해주세요.");
+      validationState.date = true;
+    }
+    else{
+      isValid(date, dateHint, "✅ 날짜 선택 완료");
+      validationState.date = false;
+    }
+  });
+
+  count.addEventListener("input", ()=>{
+    const value = count.value.trim();
+
+    if(Number(value) >=1){
+      isValid(count, countHint, "${value}명");
+      validationState.count = false;
+    }
+    else{
+      isInvalid(count, countHint, "❌ 1명 이상 입력하세요.");
+      validationState.count = true;
+    }
+    });
+
+memo.addEventListener("focus", ()=>{
+  memoHint.textContent = "요청사항은 선택 입력입니다.";
+    
+  })
+memo.addEventListener("blur",()=>{
+  memoHint.textContent = "";
+  });
+
+function updateSubmitState(){
+  const allValid = Object.values(validationState).every(Boolean);
+  // Object는 자바스크립트에 기본으로 내장된 도구. 객체를 다룰 때 쓰는 함수를 모아둠
+  // .Values()는 값을 모아서 배열로 만들어줌
+  // Object.values(validationState) // 👉 [true, false, true]
+  // .every()는 배열의 모든 값이 조건을 확인하는지 확인하는 함수
+ // 괄호 안에 조건 함수 필요
+ // Boolean은 값을 true/false로 변환하는 함수
+
+  submitBtn.disabled = !allValid;
+  // 모두가 유효하면 true -> 유효하지 않으면 false -> 유효하면 !allValid가 false로 disabled가 비활성화 -> 버튼 활성화 
+};
+
+form.addEventListener("submit",(e)=>{
+  e.preventDefalut();
+  const allValid = Object.values(validationState).every(Boolean);
+
+  if(allValid === true){
+    resultMessage.textContent = "🎉 신청 완료!";
+    form.reset();
+  }
+  else{
+   if (!validationState.name) {
+      name.focus();
+    } else if (!validationState.email) {
+      email.focus();
+    } else if (!validationState.date) {
+      date.focus();
+    } else if (!validationState.count) {
+      count.focus();
+    }
+  };
+});
+
+
+
+
+
+
+
+</script>
+
+
+
+
+
+</html>
