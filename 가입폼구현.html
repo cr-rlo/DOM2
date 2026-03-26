@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>가입 폼 구현</title>
+  <style>
+  input {
+    padding: 6px;
+    margin-top: 4px;
+    margin-bottom: 10px;
+    border: 2px solid #ccc;
+    outline: none;
+    transition: border-color 0.2s ease;
+  }
+
+  input.valid {
+    border-color: green;
+  }
+
+  input.invalid {
+    border-color: red;
+  }
+
+  .hint {
+    display: block;
+    font-size: 12px;
+    color: #555;
+    margin-top: -6px;
+    margin-bottom: 8px;
+  }
+
+  button:disabled {
+    background: #ddd;
+    color: #999;
+    cursor: not-allowed;
+  }
+
+  button {
+    padding: 8px 12px;
+    font-weight: bold;
+  }
+  </style>
+</head>
+<body>
+  <form id="signupForm">
+    <label>닉네임:
+      <input type="text" name="nickname" maxlength="12" autofocus />
+      <span class="hint" id="nickname-hint"></span>
+    </label>
+
+    <label>이메일:
+      <input type="email" name="email" />
+      <span class="hint" id="email-hint"></span>
+    </label>
+
+    <label>비밀번호:
+      <input type="password" name="password" />
+      <span class="hint" id="password-hint"></span>
+    </label>
+
+    <label>
+      <input type="checkbox" id="editReferrer" /> 추천인 코드를 직접 입력할게요
+    </label>
+
+    <label>추천인 코드:
+      <input type="text" name="referrer" readonly />
+    </label>
+
+    <button type="submit" disabled>가입하기</button>
+  </form>
+</body>
+
+<script>
+const form = document.getElementById("signupForm");
+const nickname = form.nickname;
+const email = form.email;
+const password = form.password;
+const checkbox = document.getElementById("editReferrer");
+const submitBtn = form.querySelector("button");
+
+const nicknameHint = document.getElementById("nickname-hint");
+const emailHint = document.getElementById("email-hint");
+const passwordHint = document.getElementById("password-hint");
+
+const validationState = {
+  nickname: false, // 객체 안에는 :를 써야함
+  email: false,
+  password: false,
+  // 처음에는 아무것도 입력하지 않은 상태이므로 false
+};
+// 각 필드의 유효 여부를 별도로 저장해두면, 매번 DOM에서 클래스를 직접 읽어오는 비효율을 방지할 수 있음
+
+// 1. 닉네임 실시간 유효성 검사
+nickname.addEventListener("input", ()=>{
+  const len = nickname.value.trim().length;
+  if (len >= 2){
+    setValid(nickname, nicknameHint, "사용가능한 닉네임입니다.");
+    validationState.nickname = true;
+  }
+  else{
+    setInvalid(nickname, nicknameHint,"X 최소 2자 이상 입력하세요.");
+    validationState.nickname = false;
+
+  }
+  updateSubmitState();
+});
+
+// 2. 이메일 blur 유효성 검사
+email.addEventListener("blur", ()=>{
+  if (email.value.includes("@")){
+    setValid(email, emailHint, "유효한 이메일 입니다.");
+    validationState.email = true;
+  }
+  else{
+    setInvalid(email, emailHint,"X 이메일 형식을 확인하세요.");
+    validationState.email = false;
+  }
+  updateSubmitState();
+}
+);
+
+// 3. 비밀번호 실시간 유효성 검사
+password.addEventListener("input",()=>{
+  if(password.value.length >= 6){
+    setValid(password, passwordHint, "안전한 비밀번호 입니다.");
+    validationState.password = true;
+  }else{
+    setInvalid(password, passwordHint, "X 6자 이상 입력해주세요.");
+    validationState.password = false;
+  }
+  updateSubmitState();
+});
+// 4. 추천인 코드 readOnly toggle
+checkbox.addEventListener("change", ()=>{
+  referrer.readOnly = !checkbox.checked;
+  if(!checkbox.checked){
+    referrer.value = "";
+  }
+});
+// 유저가 선택적으로 값을 수정할 수 있도록 하고, 체크 해제 시에는 값을 초기화하여 불필요한 값이 남지 않도록 처리
+// referrer.readOnly 와 referrer.setAttribute("readonly", ""); 는 같은 동작
+
+
+// 5. 공통 유효/무효 표시 함수
+function setValid(input, hintEl, message){
+  input.classList.add("valid");
+  input.classList.remove("invalid");
+  hintEl.textContent = message;
+};
+
+function setInvalid(input, hintEl, message){
+  input.classList.add("invalid");
+  input.classList.remove("valid");
+  hintEl.textContent = message;
+};
+
+// 6.버튼 활성화 여부 갱신
+function updateSubmitState(){
+  const allValid = Object.values(validationState).every(Boolean);
+  // Object는 자바스크립트에 기본으로 내장된 도구. 객체를 다룰 때 쓰는 함수를 모아둠
+  // .Values()는 값을 모아서 배열로 만들어줌
+  // Object.values(validationState) // 👉 [true, false, true]
+  // .every()는 배열의 모든 값이 조건을 확인하는지 확인하는 함수
+ // 괄호 안에 조건 함수 필요
+ // Boolean은 값을 true/false로 변환하는 함수
+
+  submitBtn.disabled = !allValid;
+  // 모두가 유효하면 true -> 유효하지 않으면 false -> 유효하면 !allValid가 false로 disabled가 비활성화 -> 버튼 활성화 
+}
+
+
+</script>
+</html>

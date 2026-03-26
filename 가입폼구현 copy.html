@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>가입 폼 구현</title>
+  <style>
+    #signupForm {
+      display: flex;
+    }
+    button[type="submit"] {
+      display: flex;
+      width: 200px;
+      height: 40px;
+      align-items: center;
+      justify-content: center;
+    }
+    .valid{
+      outline: none;
+      border-color: blue;
+    }
+    .invalid{
+      outline: none;
+      border-color: red;
+    }
+  </style>
+</head>
+<body>
+  <form id="signupForm">
+    <label>닉네임:
+      <input type="text" name="nickname" maxlength="12" autofocus />
+      <span class="hint" id="nickname-hint"></span>
+    </label>
+
+    <label>이메일:
+      <input type="email" name="email" />
+      <span class="hint" id="email-hint"></span>
+    </label>
+
+    <label>비밀번호:
+      <input type="password" name="password" />
+      <span class="hint" id="password-hint"></span>
+    </label>
+
+    <label>
+      <input type="checkbox" id="editReferrer" /> 추천인 코드를 직접 입력할게요
+    </label>
+
+    <label>추천인 코드:
+      <input type="text" name="referrer" readonly />
+    </label>
+
+    <button type="submit" disabled>가입하기</button>
+  </form>
+</body>
+
+<script>
+const form = document.getElementById("signupForm");
+const nickname = document.querySelector("[name = nickname]");
+const email = document.querySelector("[name = email]");
+const password = document.querySelector("[name = password]");
+const referrer = document.querySelector("[name = referrer]");
+const checkbox = document.getElementById("editReferrer");
+const submit = document.querySelector("[type = submit]");
+
+const nicknameHint = document.getElementById("nickname-hint");
+
+
+
+nickname.addEventListener("input",(e) => {
+  const nValue = nickname.value.trim().length;
+
+  nicknameHint.textContent = `${nValue}자 입니다`;
+  if (nValue < 2 ){nickname.classList.add("invalid");
+  nickname.classList.remove("valid");
+  }
+  else {nickname.classList.add("valid");
+  nickname.classList.remove("invalid");};
+
+
+} );
+
+email.addEventListener("blur",(e) => {
+  const eValue = email.value.trim();
+
+  if (!eValue.includes("@")){
+
+  email.classList.add("invalid");
+  email.classList.remove("valid");
+  }
+  else {email.classList.add("valid");
+  email.classList.remove("invalid");};
+
+  });
+
+password.addEventListener("input",(e) => {
+  const pValue = password.value.trim().length;
+
+  if (pValue < 6 ){password.classList.add("invalid");
+  password.classList.remove("valid");
+  }
+  else {password.classList.add("valid");
+  password.classList.remove("invalid");};
+
+
+   ;} );
+
+  checkbox.addEventListener("change",(e) => {
+    if(e.target.checked){
+      referrer.removeAttribute("readonly"); // 체크하면 readonly 제거
+  } else {
+    referrer.setAttribute("readonly", "");  // 해제하면 readonly 다시 추가
+  }// setAttribute는 항상 (속성명, 값) 형식이라 값을 넣어야 하는데, readonly는 값이 없으니까 빈 문자열 ""을 넣음
+});
+
+function checkAllValid() {
+  const isNicknameValid = nickname.value.trim().length >= 2;
+  const isEmailValid = email.value.includes("@");
+  const isPasswordValid = password.value.trim().length >= 6;
+
+  if (isNicknameValid && isEmailValid && isPasswordValid) {
+    submit.removeAttribute("disabled");
+  } else {
+    submit.setAttribute("disabled", "");
+  }
+};
+</script>
+</html>
