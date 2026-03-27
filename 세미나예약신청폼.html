@@ -65,6 +65,31 @@
 
   };
 
+  form.addEventListener("keydown",(e)=>{
+    if (e.key === "Enter"){
+      e.preventDefalut();
+
+      const inputs = form.querySelectorAll("input"); // nodeList로 저장됨. 배열이 아니라서 배열 메서드는 쓸 수 없지만 배열처럼 index 접근은 가능
+
+      // 지금 focus된 input이 몇 번째인지 모르기 때문에 하나씨 비교
+      for (let i = 0; i < inputs.length; i++ ){if (inputs[i] === e.target){
+        if(inputs[i+1]){// 현재 input이 마지막이 아닐 때 
+          inputs[i+1].focus();
+
+        }
+        else{
+          // 마지막 input에서 Enter을 눌렀을 때
+          if (!submitBtn.disabled){
+            form.submit();
+          }
+        }
+        break;
+      }
+     } 
+    }
+  });
+
+
   name.addEventListener("input", ()=>{ 
     const len = name.value.trim().length;
 
