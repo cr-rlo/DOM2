@@ -148,7 +148,9 @@
         date: false,
         count: false,
       };
-      // 
+      // 각 입력 필드의 유효 여부를 추적하는 전역 상태 객체. 버튼 활성화 여부 판단에 사용됨
+      // 전역 상태 객체란 함수 밖에서 현재 유효한지 아닌지 등의 값을 나타내는 상태를 객체 {}로 묶어서 관리하도록 선언한 것
+
 
 
 
@@ -212,6 +214,7 @@
       });
 
       // 상태 표시 함수들
+      //  유효/무효 표시 함수 -> 시각적 피드백과 validationState 업데이트 동시 처리
       function setValid(key) {
         fields[key].classList.add("valid");
         fields[key].classList.remove("invalid");
@@ -222,10 +225,17 @@
         fields[key].classList.remove("valid");
         validationState[key] = false;
       }
+      
+
+      //제출 버튼 활성화 조건 확인
       function updateSubmitState() {
         const allValid = Object.values(validationState).every(Boolean);
         submitBtn.disabled = !allValid;
       }
+      // validationState의 값들을 배열로 꺼내기
+      // Object.values()가 객체를 배열로 변환해주는 함수. .every()가 배열 메서드라서 
+      // .evert(Boolean)으로 전부 true인지 확인
+      // 전부 true가 아니면 submitBtn 비활성화
 
       // 엔터 키로 다음 필드 이동 + 마지막에서 submit 실행
       form.addEventListener("keydown", (e) => {
@@ -233,30 +243,52 @@
           const focusables = [
             ...form.querySelectorAll("input, select, textarea"),
           ];
+          // 폼 안에 있는 모든 가능ㅎ나 요소들을 가져온 nodeList를 펼쳐서 배열로 변환
+
           const current = document.activeElement;
+          // 지금 포커스가 있는 요소를 의미함
+          // activeElement는 현재 포커스 된 요소를 반환해줌
           const idx = focusables.indexOf(current);
+          // indexOf는 배열에서 특정 요소가 몇 번째인지 알려주는 함수
+          // 이때문에 위에서 배열로 변환한 것
+          // 현재 포커스 된 요소가 몇 번째 인덱스인지를 가져와서 idx에 저장
+          // 없으면 -1을 반환
+
           if (idx >= 0 && idx < focusables.length - 1) {
             e.preventDefault();
             focusables[idx + 1].focus();
-          } else if (idx === focusables.length - 1 && !submitBtn.disabled) {
+          } // 현재 요소가 배열 안에 있고 마지막 인덱스가 아니면 다음 요소로 포커스
+          else if (idx === focusables.length - 1 && !submitBtn.disabled) {
             e.preventDefault();
             form.requestSubmit();
-          }
+          } // 마지막 요소이고, 버튼이 활성화되어 있으면 requestSubmit함수 호출
+          // form.submit으로 제출하면 아래에 등록할 이벤트를 무시하고 제출해버림 
         }
       });
 
       // submit 이벤트 처리
+      // form.addEventListener("submit", (e) => 은 제출할 때 실행할 코드를 등록하는 것
       form.addEventListener("submit", (e) => {
         e.preventDefault();
         const firstInvalidKey = Object.keys(validationState).find(
           (key) => !validationState[key]
         );
+        // Object.keys는 Object.values()와 반대로 키만 뽑아오는 함수
+        // find()는 괄호 안 조건에 맞는(true가 되는) 첫 번째 값을 배열에서 반환하는 것
+        // 여기서 조건은 (key) => !validationState[key]의 화살표 함수
+        // !validationState[key]는 false 값이 있으면 true를 반환하여 그 값을 find가 찾음
+        // 즉 상태가 false인 값의 key가 firstInvalidKey에 저장됨
+
         if (firstInvalidKey) {
           fields[firstInvalidKey].focus();
           return;
+          // 유효하지 않은 값으로 포커스
         }
         resultMessage.textContent = "🎉 신청 완료!";
         form.reset();
+        // input값의 value를 비워주는 것
+
+        // 상태 초기화
         Object.keys(validationState).forEach((k) => {
           validationState[k] = false;
           fields[k].classList.remove("valid", "invalid");
