@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title>온라인 상담</title>
+    <style>
+      form {
+        max-width: 400px;
+        margin: 20px auto;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-family: sans-serif;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 15px;
+      }
+
+      input,
+      select,
+      textarea {
+        display: block;
+        width: 100%;
+        padding: 8px;
+        margin-top: 4px;
+        border: 2px solid #ccc;
+        border-radius: 4px;
+        font-size: 14px;
+        box-sizing: border-box;
+      }
+
+      .error-message {
+        height: 16px;
+      }
+      /* 에러 메시지 영역을 고정된 높이로 만들어서, 메시지가 없어질 때 레이아웃이 흔들리는 것을 방지 */
+
+      input.valid,
+      select.valid,
+      textarea.valid {
+        border-color: green;
+      }
+
+      input.invalid,
+      select.invalid,
+      textarea.invalid {
+        border-color: red;
+      }
+
+      button {
+        width: 100%;
+        padding: 10px;
+        font-size: 16px;
+        margin-top: 10px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      button:disabled {
+        background-color: #aaa;
+        cursor: not-allowed;
+      }
+
+      #result-message {
+        text-align: center;
+        font-weight: bold;
+        margin-top: 20px;
+        color: #2c3e50;
+      }
+    </style>
+  </head>
+  <body>
+    <form id="consult-form" novalidate>
+      <!-- novalidate는 브라우저의 기본 유효성 검사를 끄는 속성 -->
+  <label>
+    상담 종류:
+    <select name="type" required>
+      <!-- required는 필수 입력 속성, JS에서 checkValidity()시 사용됨 -->
+      <option value="">선택하세요</option>
+      <option value="financial">금융 상담</option>
+      <option value="medical">의료 상담</option>
+      <option value="legal">법률 상담</option>
+    </select>
+    <span class="error-message" id="type-error" aria-live="polite"></span>
+  </label>
+    <!-- aria-live="polite"는 스크린 리더가 변경된 내용을 사용자에게 알리는 방식 중 하나로, 실시간으로 메세지가 바뀔 때 스크린 리더가 자연스럽게 읽어줌 -->
+
+  <label>
+    상담 날짜:
+    <input type="date" name="date" disabled />
+    <span class="error-message" id="date-error" aria-live="polite"></span>
+  </label>
+
+  <label>
+    상담 시간:
+    <input type="time" name="time" disabled />
+    <span class="error-message" id="time-error" aria-live="polite"></span>
+  </label>
+
+  <label>
+    이름:
+    <input type="text" name="name" maxlength="10" />
+    <span class="char-count" id="name-count">0 / 10</span>
+    <span class="error-message" id="name-error" aria-live="polite"></span>
+  </label>
+
+  <label>
+    상담 목적:
+    <textarea name="purpose" rows="3" placeholder="선택 사항입니다."></textarea>
+    <span class="error-message" id="purpose-hint" aria-live="polite"></span>
+  </label>
+
+  <label>
+    <input type="checkbox" name="agree" />
+    개인정보 수집 및 이용에 동의합니다.
+    <span class="error-message" id="agree-error" aria-live="polite"></span>
+  </label>
+
+  <button type="submit" disabled>상담 예약하기</button>
+</form>
+
+<p id="result-message"></p>
+
+
+  <script>
+    const form = document.getElementById("consult-form");
+      // 폼 안에 있는 요소들을 다루거나 폼 자체에 이벤트를 걸기 위해서 form에 접근
+     const fields = {
+      type: form.type,
+      date: form.date,
+      time: form.time,
+      name: form.name,
+      purpose: form.purpose,
+      agree: form.agree,
+     };
+    // form안의 필드들을 객체로 한번에 묶어서 코드 중복을 줄이고 재사용성 높임
+    const errors = {
+      type: document.getElementById("type-error"),
+      date: document.getElementById("date-error"),
+      time: document.getElementById("time-error"),
+      name: document.getElementById("name-error"),
+      purpose: document.getElementById("purpose-hint"),
+      agree: document.getElementById("agree-error"),
+     };
+    // form안의 에러들을 객체로 한번에 묶어서 코드 중복을 줄이고 재사용성 높임
+
+    const charCount = document.getElementById("name-count");
+    // 이름 필드의 실시간 글자 수 표시용 요소
+
+    const debounce = (func, delay = 300 ) => {
+      let timer;
+      return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(()=>
+          func(...args), delay);
+        };
+      };
+      // 디바운스 함수는 특정 이벤트가 연속해서 발생할 때, 마지막 이벤트가 발생한 후 일정 시간(delay) 동안 추가 이벤트가 발생하지 않으면 func 함수를 실행하는 고차. 여기서는 이름 입력 시 글자 수 표시 업데이트에 사용.
+    
+
+    const submitBtn = form.querySelector("button");
+    // 제출 버튼 가져오기
+
+    const resultMessage = document.getElementById("result-message");
+    // 완료 메세지 가져오기
+      
+    const validationState = {
+      type: false,
+      date: false,
+      time: false,
+      name: false,
+      agree: false,
+    };
+    // 각 입력 필드의 유효 여부를 추적하는 전역 상태 객체. 버튼 활성화 여부 판단에 사용됨
+    // 전역 상태 객체란 함수 밖에서 현재 유효한지 아닌지 등의 값을 나타내는 상태를 객체 {}로 묶어서 관리하도록 선언한 것
+
+    // 핵심 유효성 컨트롤 함수
+    // 필드의 유효성 상태를 통합 관리하는 핵심 함수
+    const setFieldState = (el, vallid, message = "") => {
+      // el: 검사할 input 요소, valid: 유효성 검사 결과(true/false), message: 표시할 메세지(기본값 빈 문자열)
+      const name = el.name;
+      // input 요소의 name 속성값을 가져와서 name 변수에 저장. 예를 들어, name="date"인 input 요소라면 name 변수에는 "date"가 저장됨
+      el.setCustomValidity(valid ? "" : message );
+      // 유효성 검사 결과에 따라 input 요소의 커스텀 유효성 메시지를 설정. valid가 true면 빈 문자열로 설정해서 유효한 상태로 만들고, false면 message를 설정해서 유효하지 않은 상태로 만듦
+      validationState[name] = valid;
+      // validationState 객체에서 해당 필드의 유효성 상태를 업데이트. 예를 들어, name이 "date"이고 valid가 true면 validationState.date는 true로 설정됨
+      errors[name].textContent = valid ? "" : message;
+      // 해당 필드의 에러 메시지 요소에 유효성 검사 결과에 따른 메시지를 표시. valid가 true면 빈 문자열로 설정해서 메시지를 숨기고, false면 message를 표시해서 에러 메시지를 보여줌
+      el.classList.toggle("valid", valid);
+      // input 요소에 "valid" 클래스를 valid가 true일 때 추가하고, false일 때 제거. 이 클래스는 CSS에서 유효한 입력 필드에 초록색 테두리를 적용하는 데 사용됨
+      el.classList.toggle("invalid", !valid);
+      // input 요소에 "invalid" 클래스를 valid가 false일 때 추가하고, true일 때 제거. 이 클래스는 CSS에서 유효하지 않은 입력 필드에 빨간색 테두리를 적용하는 데 사용됨
+      updateSubmitState();
+      // 모든 필드의 유효성 상태가 변경될 때마다 제출 버튼의 활성화 여부를 업데이트하는 함수 호출
+    };
+
+
+
+    // 1. 상담 종류 전택(select)
+    fields.type.addEventListener("change", () => { // type select 요소에 change 이벤트 리스너 등록. 사용자가 상담 종류를 변경할 때마다 실행됨
+      const valid = fields.type.value !== "";
+      // 상담 종류가 선택되었는지 여부를 검사. value가 빈 문자열이 아니면 valid는 true, 빈 문자열이면 false
+      setFieldState(fields.type, valid, "❌ 상담 종류를 선택해주세요.");
+      // setFieldState 함수를 호출해서 상담 종류 필드의 유효성 상태를 업데이트. valid가 false일 때 "❌ 상담 종류를 선택해주세요."라는 메시지를 표시, true일 때는 메시지를 숨김
+      fields.date.disabled = !valid;
+      fields.time.disabled = !valid;
+      // 상담 종류가 선택되지 않았을 때 날짜와 시간 필드를 비활성화
+    });
+
+    // 2. 상담 날짜 선택
+    fields.date.addEventListener("blur", () => { // date input 요소에 blur 이벤트 리스너 등록. 사용자가 날짜 입력 필드에서 포커스를 잃을 때마다 실행됨
+      const dateVal = new Date(fields.date.value);
+      // 입력된 날짜 값을 Date 객체로 변환
+      const today = new Date();
+      // 현재 날짜를 Date 객체로 생성
+      // Date 객체끼리 비교하는거라 날짜 형식이 달라도 비교 가능
+      today.setHours(0,0,0,0);
+      // 시,분,초,밀리초를 전부 0으로 설정해서 날짜끼리만 비교할 수 있도록 함
+      const valid = fields.date.value && dateVal >= today;
+      // 날짜가 입력되었는지와 입력된 날짜가 오늘 이후인지 검사. value가 존재하고, dateVal이 today보다 크거나 같은 경우 valid는 true, 그렇지 않으면 false. 둘 다 만족해야 유효한 날짜로 간주됨
+      setFieldState(fields.date, valid, "오늘 이후 날짜만 선택할 수 있습니다.");
+
+     });
+
+    // 3. 상담시간 입력 
+    fields.time.addEventListener("input", () => {
+      const timeValue = fields.time.value;
+      //시간 값 가져오기 (형식: "HH:MM")
+      const [h,m] = timeValue.split(":").map(Number);
+      // 시간이랑 분 값 분리하기. split(":")로 문자열을 ":" 기준으로 나누고, map(Number)로 각각을 숫자로 변환해서 h와 m에 저장
+      // map(Number)은 배열의 모든 요소에 Number 함수를 적용해서 문자열을 숫자로 변환하여 새 배열을 만드는 역할
+      const valid = h >= 9 && h < 18;
+      // 상담 가능 시간은 09:00 ~ 18:00이므로, 시간 값이 9 이상이고 18 미만인지 검사. valid는 true 또는 false
+      setFieldState(fields.time, valid, "상담 시간은 09:00 ~ 18:00 사이여야 합니다.");
+
+     });
+
+
+    // 4. 상담자 이름 입력
+    fields.name.addEventListener("input", debounce(() => {
+      // 입력 이벤트가 발생할 때마다 실행되는 함수에 디바운스 적용. 사용자가 입력을 멈춘 후 300ms 동안 추가 입력이 없으면 함수가 실행됨
+      const val = fields.name.value.trim();
+      // 입력된 이름 값에서 양쪽 공백 제거
+      charCount.textContent = `${val.length} / 10`;
+      // charCount 요소에 현재 입력된 글자 수와 최대 글자 수를 표시. 위에 선언해둠
+      // val.length는 공백 제거된 이름의 글자 수를 나타냄
+      const valid = val.length >= 2;
+      // 이름은 최소 2자 이상이어야 유효하다고 간주. valid는 true 또는 false
+      setFieldState(fields.name, valid, "이름은 2자 이상이어야 합니다.");
+
+     }));
+
+
+    // 5. 상담 목적 입력(선택사항)
+    fields.purpose.addEventListener("focus", () => {
+      errors.purpose.textContent = "상담목적은 선택 입력입니다.";
+    });
+    fields.purpose.addEventListener("blur", () => {
+      errors.purpose.textContent = "";
+    });
+
+    // 6. 약관 동의
+    fields.agree.addEventListener("change", ()=>{
+      const checked = fields.agree.checked;
+      // 체크박스의 체크 여부 가져오기
+      setFieldState(fields.agree, checked, "개인정보 수집 및 이용에 동의해야 합니다.");
+    });
+
+
+
+
+    // 상태 표시 함수들
+
+    //제출 버튼 활성화 조건 확인
+    function updateSubmitState() {
+      const allValid = Object.values(validationState).every(Boolean);
+      submitBtn.disabled = !allValid;
+    }
+    // validationState의 값들을 배열로 꺼내기
+    // Object.values()가 객체를 배열로 변환해주는 함수. .every()가 배열 메서드라서 
+    // .evert(Boolean)으로 전부 true인지 확인
+    // 전부 true가 아니면 submitBtn 비활성화
+
+    // 엔터 키로 다음 필드 이동 + 마지막에서 submit 실행
+    form.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        const focusables = [
+          ...form.querySelectorAll("select, input, textarea"),
+        ];
+        // 폼 안에 있는 모든 가능한 요소들을 가져온 nodeList를 펼쳐서 배열로 변환
+
+        const current = document.activeElement;
+        // 지금 포커스가 있는 요소를 의미함
+        // activeElement는 현재 포커스 된 요소를 반환해줌
+        const idx = focusables.indexOf(current);
+        // indexOf는 배열에서 특정 요소가 몇 번째인지 알려주는 함수
+        // 이 때문에 위에서 배열로 변환한 것
+        // 현재 포커스 된 요소가 몇 번째 인덱스인지를 가져와서 idx에 저장
+        // 없으면 -1을 반환
+
+        if (idx >= 0 && idx < focusables.length - 1) {
+          e.preventDefault();
+          focusables[idx + 1].focus();
+        } // 현재 요소가 배열 안에 있고 마지막 인덱스가 아니면 다음 요소로 포커스
+        else if (idx === focusables.length - 1 && !submitBtn.disabled) {
+          e.preventDefault();
+          form.requestSubmit();
+        } // 마지막 요소이고, 버튼이 활성화되어 있으면 requestSubmit함수 호출
+        // form.submit으로 제출하면 아래에 등록할 이벤트를 무시하고 제출해버림 
+       }
+      });
+
+    // submit 이벤트 처리
+    // form.addEventListener("submit", (e) => 은 제출할 때 실행할 코드를 등록하는 것
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (!form.checkValidity()){
+        // form의 내장 유효성 검사 함수인 checkValidity()를 호출해서 폼 전체의 유효성을 검사. 유효하지 않은 필드가 하나라도 있으면 false를 반환하고, 모든 필드가 유효하면 true를 반환. !를 붙여서 유효하지 않은 경우에만 아래 코드 실행
+        form.reportValidity();
+        // checkValidity()로 유효하지 않은 필드가 있으면 reportValidity()를 호출해서 브라우저가 기본적으로 제공하는 유효성 검사 메시지를 표시하도록 함
+        const firstInvalidKey = Object.keys(validationState).find(
+          (key) => !validationState[key]
+        );
+        // validationState 객체에서 값이 false인 첫 번째 키를 찾아서 firstInvalidKey에 저장. find()는 괄호 안 조건에 맞는(true가 되는) 첫 번째 값을 배열에서 반환하는 것
+      }
+
+      if (firstInvalidKey) {
+        fields[firstInvalidKey].focus();
+        return;
+        // 유효하지 않은 값으로 포커스
+      }
+      resultMessage.textContent = "🎉 신청 완료!";
+      form.reset();
+      // input값의 value를 비워주는 것
+
+      // 상태 초기화
+      Object.keys(validationState).forEach((k) => {
+        validationState[k] = false;
+        fields[k].classList.remove("valid", "invalid");
+        errors[k].textContent = "";
+      });
+      submitBtn.disabled = true;
+    });
+  </script>
+  </body>
+</html>
