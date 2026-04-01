@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>입력, 스크롤 최적화</title>
+  <style>
+    #scroll-box{
+      height: 1500px;
+      overflow-y: scroll;
+      border: 1px solid black;
+    }
+  </style>
+</head>
+<body>
+  <input type = "text" id = "search"
+  placeholder = "검색어를 입력하세요" />
+
+  <ul id = results>
+  </ul>
+  <div id = scroll-box>
+
+  </div>
+
+  <script>
+    const keywords = [
+  "JavaScript", "Java", "Python", "React", "Vue", "Angular",
+  "Node.js", "Express", "TypeScript", "HTML", "CSS", "Django",
+  "Flask", "Next.js", "Nuxt.js", "Tailwind", "Bootstrap", "Webpack",
+  "Vite", "MongoDB", "MySQL", "PostgreSQL", "GraphQL", "REST API",
+  "DOM", "EventListener", "throttle", "debounce", "async", "await"
+];
+
+    const searchInput = document.getElementById("search");
+    const results = document.getElementById("results");
+    const scrollBox = document.getElementById("scroll-box");
+
+    const debounce = (func, delay = 500) => {
+      let timer;
+      return function(...args){
+      clearTimeout(timer);
+      timer = setTimeout(()=>
+        func(...args), delay);
+      }
+    };
+
+    searchInput.addEventListener("input", debounce (()=>{
+      const inputValue = searchInput.value.trim();
+      const filterd = keywords.filter(keyword => keyword.includes(inputValue));
+      if (filterd.length > 0){
+        results.innerHTML = filterd.map(keyword => `<li>${keyword}</li>`).join("");
+      } else {
+        results.innerHTML = "<li>검색 결과가 없습니다.</li>";
+      }
+      
+      
+
+
+
+    }));
+
+    function throttle(func, delay = 200){
+      let lastTime = 0;
+      return(...args) => {
+        const now = Date.now();
+        if(now - lastTime >= delay){
+          func(...args);
+          lastTime = now;
+        }
+      }
+    };
+    const color = ["red", "green", "blue", "yellow", "purple"];
+     let index = 0;
+    
+
+    window.addEventListener( "scroll", throttle(()=>{
+        console.log("스크롤 이벤트 발생");
+        changeBackgroundColor();
+    }, 200 ));
+
+    function changeBackgroundColor(){
+     
+     index++;
+     if (index >= color.length) index = 0;
+     scrollBox.style.backgroundColor = color[index];
+
+    };
+
+
+
+  </script>
+</body>
+
+</html>
