@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>할 일 관리 시스템</title>
+  <style>
+    body {
+  font-family: 'Segoe UI', sans-serif;
+  background: #f4f4f4;
+  margin: 0;
+  padding: 20px;
+}
+
+#app {
+  max-width: 600px;
+  margin: 0 auto;
+  background: white;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px #ccc;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.filter {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.filter button {
+  padding: 6px 12px;
+  border: none;
+  background: #ddd;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.filter button.active {
+  background: #4caf50;
+  color: white;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px 0;
+}
+
+li {
+  background: #f9f9f9;
+  padding: 10px 12px;
+  border-left: 5px solid #ccc;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+li.done {
+  text-decoration: line-through;
+  color: #888;
+  background: #e0e0e0;
+}
+
+li[data-tag="work"] {
+  border-color: #2196f3;
+}
+
+li[data-tag="study"] {
+  border-color: #ff9800;
+}
+
+li[data-tag="life"] {
+  border-color: #9c27b0;
+}
+
+li button.delete {
+  background: crimson;
+  border: none;
+  color: white;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  margin-left: 10px;
+  cursor: pointer;
+}
+
+.add-section {
+  display: flex;
+  gap: 10px;
+}
+
+input, select, button {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+button#add-btn {
+  background: #4caf50;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+  </style>
+</head>
+<body>
+  <div id="app">
+  <h1>📝 할 일 관리 (SPA + 태그 필터 + 상태 저장)</h1>
+
+  <div class="filter">
+    <button data-tag="all" class="active">전체</button>
+    <button data-tag="work">업무</button>
+    <button data-tag="study">공부</button>
+    <button data-tag="life">일상</button>
+  </div>
+
+  <ul id="todo-list"></ul>
+
+  <div class="add-section">
+    <input type="text" id="todo-input" placeholder="할 일을 입력하세요" />
+    <select id="tag-select">
+      <option value="work">업무</option>
+      <option value="study">공부</option>
+      <option value="life">일상</option>
+    </select>
+    <button id="add-btn">추가</button>
+  </div>
+</div>
+
+<script>
+const todoList = document.getElementById("todo-list");
+// todoList 요소는 할 일 목록이 렌더링될 ul 요소를 가리킴. JavaScript에서 이 요소에 접근하여 동적으로 할 일 항목을 추가하거나 제거할 수 있음
+const todoInput = document.getElementById("todo-input");
+const tagSelect = document.getElementById("tag-select");
+const dataTagButtons = document.querySelectorAll(".filter button");
+const addBtn = document.getElementById("add-btn");
+
+
+
+const state = {
+  dataIndex: 0,
+  dataTag: "all",
+  todos: [],
+  
+  filtered() {
+    if (this.dataTag === "all") return this.todos;
+    return this.todos.filter( todo => todo.tag === this.dataTag);
+    // filtered()는 현재 선택된 태그에 따라 todos를 필터링해서 반환하는 메서드. dataTag가 "all"이면 전체 리스트를 반환하고, 그렇지 않으면 todos에서 tag가 dataTag와 일치하는 항목들만 반환함
+    // this는 state 객체를 가리키므로, this.dataTag와 this.todos를 사용해서 현재 상태의 태그와 할 일 리스트에 접근할 수 있음
+    //dataTag가 all이면 전체리스트를 반환하고, 그렇지않으면 todos에서 tag가 dataTag와 일치하는 항목들만 반환함
+  }
+};
+
+dataTagButtons.forEach( button => { button.addEventListener("click", ()=>{
+  // forEach로 dataTagButtons에 있는 4개의 버튼을 하나씩 꺼내서 button 변수에 저장한 다음, 각 버튼에 클릭 이벤트리스너를 추가함. 
+  // 버튼이 클릭되면 해당 버튼의 데이터 태그를 현재 상태의 데이터 태그로 설정하는 이벤트 핸들러가 실행됨
+  proxyState.dataTag = button.dataset.tag;
+  // button.dataset.tag는 버튼 요소의 data-tag 속성에 저장된 값을 가져오는 표현식. 예를 들어, "업무" 버튼의 경우 button.dataset.tag는 "work"가 됨
+  // 버튼이 클릭되면 proxyState.dataTag가 해당 버튼의 데이터 태그로 업데이트됨. 예를 들어, "업무" 버튼이 클릭되면 proxyState.dataTag는 "work"로 설정됨
+  // 현재 상태의 데이터 태그는 state 객체의 dataTag 속성에 저장되어 있음. 버튼의 데이터 태그는 button.dataset.tag로 접근할 수 있음. 따라서 버튼이 클릭되면 state.dataTag가 해당 버튼의 데이터 태그로 업데이트됨
+  // 데이터 태그가 업데이트되면 Proxy의 set 트랩이 발동하여 화면에 표시되는 할 일 목록이 해당 태그에 맞게 필터링되어 업데이트됨
+
+  
+})});
+
+
+
+const proxyState = new Proxy(state, {set(target, key, value) {
+  target[key] = value;
+
+  if (key === "dataTag"){
+    dataTagButtons.forEach( button => {
+      button.classList.toggle("active", button.dataset.tag === value);
+    });// 버튼들 중에서 데이터 태그가 현재 상태의 데이터 태그와 일치하는 버튼에 active 클래스를 토글함
+    // 두 번째 인자로 전달된 값이 true면 클래스를 추가하고, false면 클래스를 제거하는 방식으로 작동
+    renderNotes();
+    // dataTag가 변경될 때마다 renderNotes() 함수를 호출하여 화면에 표시되는 할 일 목록을 업데이트함. 이렇게 하면 사용자가 태그 필터를 변경할 때마다 해당 태그에 맞는 할 일 목록이 즉시 반영됨
+  }
+  
+  
+
+
+  return true;
+}
+
+});
+
+addBtn.addEventListener("click", ()=>{
+  const text = todoInput.value.trim();
+  const tag = tagSelect.value;
+
+  if (text === ""){
+    alert("할 일을 입력하세요.");
+    return}
+
+  else if (proxyState.todos.some(todo => todo.text === text && todo.tag === tag)){
+    alert("이미 존재하는 할 일입니다.");
+    return;
+  }
+
+  else { proxyState.todos.push({text, tag, done: false});
+    proxyState.dataIndex++;
+    todoInput.value = "";
+    // 할 일 입력창을 초기화하여 다음 할 일을 입력할 수 있도록 함
+    // proxyState.todos 배열에 새로운 할 일 객체를 추가함. 객체는 text, tag, done 속성을 가짐. text는 입력된 할 일 내용, tag는 선택된 태그, done은 완료 여부를 나타냄
+
+
+  }
+  renderNotes();
+  // 할 일 목록이 변경된 후 renderNotes() 함수를 호출하여 화면에 표시되는 할 일 목록을 업데이트함. 이렇게 하면 사용자가 새로운 할 일을 추가할 때 해당 할 일이 즉시 화면에 나타남
+  });
+
+
+  
+function renderNotes(){
+  // 선택된 태그에 따라 필터링된 할 일 목록을 화면에 렌더링하는 함수
+  todoList.innerHTML = "";
+  // 먼저 todoList 요소의 내부 HTML을 빈 문자열로 설정하여 기존에 렌더링된 할 일 목록을 초기화함
+  proxyState.filtered().forEach( todo => {
+    // proxyState.filtered()는 현재 선택된 태그에 따라 필터링된 할 일 리스트를 반환하는 메서드. 이 필터링 된 리스트를 forEach로 순회하면서 하나씩 꺼내 객체를 todo에 담음
+    // todo.text하면 할 일의 내용, todo.tag하면 할 일의 태그, todo.done하면 할 일의 완료 여부에 접근할 수 있음
+    const li = document.createElement("li");
+    // 아직 화면에 보이지 않는 li 요소를 새로 만들어서 할 일 항목을 렌더링할 준비를 함  
+    li.textContent = todo.text;
+    // li 요소의 텍스트 콘텐츠를 할 일의 내용으로 설정함. 이렇게 하면 할 일의 내용이 화면에 표시됨
+    li.dataset.tag = todo.tag;
+    // li 요소의 data-tag 속성에 할 일의 태그를 저장함. 이렇게 하면 나중에 CSS에서 태그별로 스타일링할 때 이 속성을 활용할 수 있음
+    li.addEventListener("click", () => {
+      todo.done = !todo.done;
+      // 할 일 항목을 클릭하면 해당 할 일의 완료 여부를 토글(반전)시킴. 즉, 완료되지 않은 할 일을 클릭하면 done이 true로 변경되고, 완료된 할 일을 클릭하면 done이 false로 변경됨
+      renderNotes();
+      // 할 일의 완료 여부가 변경된 후 renderNotes() 함수를 호출하여 화면에 표시되는 할 일 목록을 업데이트함. 이렇게 하면 사용자가 할 일 항목을 클릭할 때 해당 항목의 스타일이 즉시 변경되어 완료된 상태를 시각적으로 구분할 수 있음
+    });
+
+    if (todo.done) li.classList.add("done");
+    // 할 일의 완료 여부가 true이면 li 요소에 "done" 클래스를 추가하여 스타일을 변경함. 이렇게 하면 완료된 할 일이 시각적으로 구분됨
+    // 여기서 todo.done은 할 일 객체의 done 속성에 접근하는 표현식. 이 값이 true이면 해당 할 일이 완료된 상태임을 나타냄
+    
+    const deleteBtn = document.createElement("button");
+    deleteBtn.textContent = "삭제";
+    deleteBtn.classList.add("delete");
+    li.appendChild(deleteBtn);
+
+    deleteBtn.addEventListener("click", (e) => { e.stopPropagation();
+      // 자식을 클릭하면 부모도 클릭되는 이벤트 버블링을 막기위해 e.stopPropagation()를 호출하여 이벤트가 상위 요소로 전파되는 것을 방지함. 이렇게 하면 삭제 버튼을 클릭할 때 li 요소의 클릭 이벤트가 발생하지 않도록 함
+      const index = proxyState.todos.findIndex( t => t.text === todo.text && t.tag === todo.tag);
+      // proxyState.todos 배열에서 현재 렌더링된 할 일과 동일한 텍스트와 태그를 가진 할 일의 인덱스를 찾음. findIndex()는 조건에 맞는 첫 번째 요소의 인덱스를 반환함
+      if (index !== -1) {
+        // 해당 인덱스가 -1이 아니면, 즉 일치하는 할 일이 배열에 존재하면 splice() 메서드를 사용하여 해당 인덱스에서 1개의 요소를 제거함. 이렇게 하면 할 일 목록에서 해당 할 일이 삭제됨
+
+        proxyState.todos.splice(index, 1);
+        // splice()에서 -1은 마지막 요소를 의미하지만, 여기서는 index가 -1이 아니면 해당 인덱스에서 1개의 요소를 제거하므로, 실제로는 일치하는 할 일이 배열에 존재할 때만 삭제가 이루어짐
+        // 해당 인덱스에 있는 할 일 객체를 배열에서 제거함. splice()는 배열에서 요소를 추가하거나 제거하는 메서드로, 여기서는 index 위치에서 1개의 요소를 제거함
+        renderNotes();
+        // 할 일 목록이 변경된 후 renderNotes() 함수를 호출하여 화면에 표시되는 할 일 목록을 업데이트함. 이렇게 하면 사용자가 삭제 버튼을 클릭할 때 해당 할 일이 즉시 화면에서 사라짐
+      }
+    });
+
+    todoList.appendChild(li);
+
+
+    
+  });
+  
+}
+
+
+
+</script>
+
+</body>
+
+</html>
